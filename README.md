@@ -14,16 +14,15 @@ The direct link to the full text is available online through [Springer Link](htt
 
 ### Structure
 
-There are four main folders in which a version of the algorithm can be found.
+There are three main folders in which a version of the algorithm can be found.
 Each new version builds upon the previous one and adds functionality, as explained below.
 This makes it easy to quickly set up simulations and experiments for each version, and allows to quickly compare code of each version if needed.
 
 The four versions are:
 
 1. First-Attempt
-2. Advanced-No-ECC
-3. Advanced-ECC
-4. Advanced-ECC-Multihop
+2. Full algorithm: Final_single_hop
+3. Full algorithm with multi-hopping
 
 All versions work through point-to-point communication. This means a Sender sends his messages to one specific Receiver, and the Receiver acknowledges the messages back to the original Sender.
 
@@ -34,15 +33,11 @@ The Sender sends each message with an Alternating Index value and a unique Label
 Once the Receiver receives a certain amount of messages, the algorithm delivers these messages to the Application Layer.
 The variable CAPACITY determines this amount of messages in the network, the value of which can be adjusted according to the needs of the implementation in the algorithm itself.
 
-#### Advanced-No-ECC
+#### Full algorithm: Final_single_hop
 
-These are the full Sender and Receiver algorithms as described in the paper. On top of the basic first attempt functionality the algorithm divides the messages in packets and sends them to the Receiver. There is no implementation of Error Correcting Codes in this version yet. The point of this is to observe the performance of the algorithm without the Error Correction Codes, and then compare it with the performance of the algorithm once the Error Correcting Codes are added. This way it is much easier to see if the possibly increased performance of the algorithm thanks to the Error Correcting Codes weigh up against the added overhead that they bring along.
+These are the full Sender and Receiver algorithms as described in the paper. On top of the basic first attempt functionality the algorithm divides the messages in packets and sends them to the Receiver. This is the First Attempt algorithm, together with the Packet Generation functionality, and the Error Correcting Codes.
 
-#### Advanced-ECC
-
-This version contains the full Sender and Receiver algorithm as described in the paper. This is the First Attempt algorithm, together with the Packet Generation functionality, and the Error Correcting Codes.
-
-#### Advanced-ECC-Multihop
+#### Full algorithm with multi-hopping
 
 In a real-life situation, it is very likely that the Sender and Receiver nodes are not within radio distance of each other. To fully observe the performance of the algorithm in such a real-life environment, it is therefore necessary to add the functionality of Multi-Hop routing through an appropriate Multi-Hop algorithm. In this case we have chosen for the IPv6 Routing Protocol for Low Power and Lossy Networks (RPL, pronounced 'Ripple'). As you will be able to see in the code, this brings along significant changes to the Sending and Receiving algorithm. The reason is that this protocol uses UDP functionality to send and receives messages. To do this it uses custom TinyOS UDP functions as defined in BLIP 2.0 (Berkely Low-Power IP Stack).
 
@@ -56,7 +51,7 @@ We work with a separate Sender and Receiver algorithm. The code is therefore imp
 
 You can customize all the Makefile options if you need something changed. I'll explain the two most useful ones here, for the rest I refer to the TinyOS documentation and specifically BLIP 2.0. Both of these options are only available in the Multi-Hop version.
 
-`CFLAGS += -DRPL_ROOT_ADDR=11`
+`CFLAGS += -DRPL_ROOT_ADDR=1`
 
 This changes the address of the root node in the RPL network. The number represents the node id. You can change this to any arbitrary node id in the network.
 
@@ -121,18 +116,10 @@ Here you can adjust three elements.
 
 The *capacity* of the network, as described in the original paper, is determined using this variable. This comes down to how many messages the Receiver will collect before delivering them to the Application Layer.
 
-`#define CAPACITY 15`
+`#define capaccity (pl-1)`
 
 In the packet generation function, there are two predefined values. This function looks at the array of messages, which are fetched from the Application Layer at the Sender side, as a matrix. It then transposes this matrix to generate the packets that will be send over the network.
 
-ROWS defines the amount of messages that are retrieved from the Application Layer. Basically this comes down to the length of the array of messages. Since the original paper specifies that the algorithm fetches *(CAPACITY + 1)* messages from the Application Layer on the Sender side, this value is set by adjusting the CAPACITY variable.
-
-`#define ROWS (CAPACITY + 1)`
-
-COLUMNS defines the length of each message in the array of fetched messages, on a bit level. The counter values, which are sent as the data part of each message, are defined as `uint16_t` or unsigned 16-bit integers. The bit-wise length of each message is therefore 16 bits (the data part at least), which motivates my choice to put the COLUMNS variable at 16.
-
-`#define COLUMNS 16`
+`#define SENDNODES 3`
 
 I've created this variable to make the algorithm easily scale according to the amount of nodes being used in the network. Since each Sender sends to one specific Receiver and vice-versa, the amount of Sender-nodes in the network (which should be equal to the amount of Receiver nodes) determines the address node id of the Receiver and Sender mote in each respective algorithm.
-
-`#define SENDNODES 3`
